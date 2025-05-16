@@ -59,7 +59,7 @@ jobs:
       UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
       isDev: 'false'
       isRC: '${{ needs.release-infos.outputs.isPreRelease }}'
-      moduleName: indicio-plenum
+      moduleName: plenum
 
   plenum_tests:
     name: Test Plenum
