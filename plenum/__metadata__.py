@@ -49,6 +49,7 @@ def set_manifest(manifest: Any, manifest_file: str = MANIFEST_FILE):
         json.dump(manifest, _f, sort_keys=True)
         _f.write('\n')
 
+
 __title__ = 'indicio-indy-plenum'
 __version_info__ = load_version()
 __version__ = __version_info__.full
