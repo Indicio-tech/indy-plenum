@@ -56,13 +56,13 @@ jobs:
       isRC: 'false'
       moduleName: plenum
 
-  # plenum_tests:
-  #   name: Test Plenum
-  #   needs: [workflow-setup, lint, build_packages]
-  #   uses: ./.github/workflows/reuseable_test.yaml
-  #   with:
-  #     GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
-  #     UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+  plenum_tests:
+    name: Test Plenum
+    needs: [workflow-setup, lint, build_packages]
+    uses: ./.github/workflows/reuseable_test.yaml
+    with:
+      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
+      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
 
   publish_artifacts:
     name: Publish Artifacts
