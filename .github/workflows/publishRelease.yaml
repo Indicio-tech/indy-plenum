@@ -120,7 +120,7 @@ jobs:
       COMPONENT: ${{ needs.release-infos.outputs.component }}
       UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
       distribution: ${{ needs.release-infos.outputs.distribution }}
-      moduleName: indicio-plenum
+      moduleName: plenum
     secrets:
       INDY_ARTIFACTORY_REPO_CONFIG: ${{ secrets.INDY_ARTIFACTORY_REPO_CONFIG }}
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
