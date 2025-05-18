@@ -123,7 +123,7 @@ setup(
                         # 'python-dateutil==2.8.1',
                         'python-dateutil',
                         # 'python-rocksdb==0.7.0',
-                        'python-rocksdb',
+                        'python-rocksdb=0.7.0',
                         'python-ursa==0.1.1',
                         ### Tests fail without version pin (GHA run: https://github.com/udosson/indy-plenum/actions/runs/1078745445)
                         'rlp==2.0.0',
