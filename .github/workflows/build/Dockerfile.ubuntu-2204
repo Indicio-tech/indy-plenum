@@ -31,6 +31,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9692C00E657DDE61 &&
 
 # TODO change this to official repo
 RUN echo "deb [trusted=yes] https://indicio.jfrog.io/artifactory/indy/ jammy dev" >> /etc/apt/sources.list 
+RUN echo "deb [trusted=yes] https://indicio.jfrog.io/artifactory/indy-static/ jammy stable" >> /etc/apt/sources.list 
 
 
 RUN apt-get update -y && apt-get install -y \
