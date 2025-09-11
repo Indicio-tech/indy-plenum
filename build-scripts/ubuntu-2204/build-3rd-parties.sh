@@ -3,7 +3,8 @@
 set -e
 set -x
 
-OUTPUT_PATH=${1:-.}
+# Ensure the output is an absolute path and not a relative path
+OUTPUT_PATH="$(readlink -f ${1:-.})"
 wheel2debconf="$(dirname "$(realpath "$0")")"/wheel2deb.yml
 
 
