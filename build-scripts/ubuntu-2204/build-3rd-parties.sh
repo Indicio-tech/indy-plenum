@@ -24,6 +24,7 @@ function build_rocksdb_deb {
     # Install it in the system as it is needed by python-rocksdb.
     make install
     cd -
+    mkdir -p ${OUTPUT_PATH}
     cp /tmp/rocksdb/package/rocksdb_${VERSION}_amd64.deb $OUTPUT_PATH
     rm -rf /tmp/rocksdb
 }
