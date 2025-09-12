@@ -4,7 +4,7 @@ set -e
 set -x
 
 # Ensure the output is an absolute path and not a relative path
-OUTPUT_PATH="$(realpath ${1:-.})"
+OUTPUT_PATH="$(realpath -m ${1:-.})"
 wheel2debconf="$(dirname "$(realpath "$0")")"/wheel2deb.yml
 
 
