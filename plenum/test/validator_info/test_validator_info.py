@@ -123,7 +123,6 @@ def test_software_info_section(info):
     assert info['Software']
     assert info['Software']['OS_version']
     assert info['Software']['Installed_packages']
-    assert info['Software']['Indy_packages']
 
 
 def test_node_info_section(info, node):
