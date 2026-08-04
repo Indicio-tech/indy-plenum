@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS builder
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -17,38 +17,32 @@ RUN git clone https://github.com/evernym/rocksdb.git /tmp/rocksdb \
     && git checkout rocksdb-5.8.8 \
     && PORTABLE=1 EXTRA_CFLAGS="-fPIC" EXTRA_CXXFLAGS="-fPIC" \
        make shared_lib -j$(nproc) \
-    && make install INSTALL_PATH=/usr \
-    && ldconfig \
+    && make install INSTALL_PATH=/build/usr \
     && rm -rf /tmp/rocksdb
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && . "$HOME/.cargo/env" \
     && rustup install 1.75.0 \
-    # Build libursa
     && git clone --depth 1 --branch v0.3.2 https://github.com/hyperledger/ursa.git /tmp/ursa \
     && cd /tmp/ursa \
     && cargo build --release -p ursa --no-default-features \
        --features "encryption,ffi,hashes,kex,serde,signatures" \
-    && cp /tmp/ursa/target/release/libursa.so /usr/lib/libursa.so \
+    && cp /tmp/ursa/target/release/libursa.so /build/usr/lib/libursa.so \
     && rm -rf /tmp/ursa \
     && cd / \
-    # Build libindy
     && git clone --depth 1 --branch v1.16.0 https://github.com/hyperledger/indy-sdk.git /tmp/indy-sdk \
     && cd /tmp/indy-sdk/libindy \
     && sed -i 's/^openssl = "0.10"/openssl = { version = "0.10", features = ["vendored"] }/' Cargo.toml \
     && cargo +1.75.0 build --release \
-    && cp target/release/libindy.so /usr/lib/libindy.so \
+    && cp target/release/libindy.so /build/usr/lib/libindy.so \
     && ldconfig \
     && cd / \
-    && rm -rf /tmp/indy-sdk \
-    && rustup self uninstall -y \
-    && rm -rf "$HOME/.cargo" "$HOME/.rustup"
+    && rm -rf /tmp/indy-sdk
 
 RUN pip3 install pyzmq==22.3.0 --install-option=--zmq=bundled
 
 RUN pip3 install python-ursa==0.1.1
 
-# Pin Cython <3 for python-rocksdb compatibility
 RUN pip3 install Cython==0.29.36
 
 RUN pip3 install \
@@ -73,3 +67,25 @@ RUN pip3 install \
     six \
     sortedcontainers==2.1.0 \
     ujson==1.33
+
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip \
+    ca-certificates \
+    libsodium23 \
+    libssl3 \
+    libzmq5 \
+    libsqlite3-0 \
+    libsnappy1v5 \
+    libbz2-1.0 \
+    liblz4-1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/usr/lib/libursa.so /usr/lib/libursa.so
+COPY --from=builder /build/usr/lib/libindy.so /usr/lib/libindy.so
+COPY --from=builder /build/usr/lib/librocksdb* /usr/lib/
+
+RUN ldconfig
+
+COPY --from=builder /usr/local /usr/local
