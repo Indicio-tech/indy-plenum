@@ -87,7 +87,7 @@ jobs:
     if: needs.release-infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_test.yaml
     with:
-      image_tag: ${{ env.PROD_IMAGE }}:latest
+      image_tag: ghcr.io/${{ github.repository_owner }}/indy-plenum:latest
 
   statusCheck:
     name: statusCheck
