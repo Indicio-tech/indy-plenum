@@ -93,6 +93,7 @@ jobs:
           tags: |
             ${{ env.PROD_IMAGE }}:${{ needs.release-infos.outputs.versionTag }}
             ${{ env.PROD_IMAGE }}:latest
+          build-args: BASE_IMAGE=${{ env.BASE_IMAGE }}:latest
 
       - name: Generate Release
         uses: softprops/action-gh-release@v2

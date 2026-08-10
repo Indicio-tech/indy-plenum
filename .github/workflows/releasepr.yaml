@@ -2,9 +2,10 @@ name: Triggered by Version Bump Release PR
 
 on:
   pull_request:
+    branches:
+      - main
     paths:
-      - '!**'
-      - "plenum/__version__.json"
+      - 'plenum/__version__.json'
 
 env:
   BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/indy-plenum-base
@@ -78,6 +79,7 @@ jobs:
           file: Dockerfile
           load: true
           tags: ${{ env.PROD_IMAGE }}:latest
+          build-args: BASE_IMAGE=${{ env.BASE_IMAGE }}:latest
 
   plenum_tests:
     name: Test Plenum
