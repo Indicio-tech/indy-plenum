@@ -27,6 +27,7 @@ jobs:
         if: github.event_name == 'push'
         with:
           registry: ghcr.io
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build base image
@@ -50,6 +51,7 @@ jobs:
         if: github.event_name == 'push'
         with:
           registry: ghcr.io
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build production image
