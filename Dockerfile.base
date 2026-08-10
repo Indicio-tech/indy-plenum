@@ -89,4 +89,3 @@ COPY --from=builder /build/usr/lib/librocksdb* /usr/lib/
 RUN ldconfig
 
 COPY --from=builder /usr/local /usr/local
-
