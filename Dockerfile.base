@@ -45,6 +45,10 @@ RUN pip3 install python-ursa==0.1.1
 
 RUN pip3 install Cython==0.29.36
 
+ENV CPLUS_INCLUDE_PATH=/build/usr/include
+ENV LIBRARY_PATH=/build/usr/lib
+ENV LD_LIBRARY_PATH=/build/usr/lib
+
 RUN pip3 install \
     base58 \
     importlib_metadata==3.10.1 \
@@ -73,13 +77,14 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y \
     python3 python3-pip \
     ca-certificates \
-    libsodium23 \
-    libssl3 \
-    libzmq5 \
-    libsqlite3-0 \
+    libgflags2.2 \
     libsnappy1v5 \
     libbz2-1.0 \
     liblz4-1 \
+    libssl3 \
+    libzmq5 \
+    libsqlite3-0 \
+    libsodium23 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/usr/lib/libursa.so /usr/lib/libursa.so
