@@ -1,0 +1,127 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plenum/__version__.json'
+
+permissions:
+  contents: write
+
+jobs:
+  extract-version:
+    name: Extract Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      version_tag: ${{ steps.parse.outputs.version_tag }}
+      is_rc: ${{ steps.parse.outputs.is_rc }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse version from commit message
+        id: parse
+        shell: bash
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          VERSION=$(grep -oP "\d+\.\d+\.\d+((-|.)?rc\d+)?" <<< "${COMMIT_MSG}" || true)
+          if [[ -z "${VERSION}" ]]; then
+            echo "No version found in commit message"
+            exit 1
+          fi
+          VERSION_TAG="v${VERSION}"
+          IS_RC="false"
+          if [[ "${VERSION}" == *"rc"* ]]; then
+            IS_RC="true"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_tag=${VERSION_TAG}" >> $GITHUB_OUTPUT
+          echo "is_rc=${IS_RC}" >> $GITHUB_OUTPUT
+
+  publish:
+    name: Build and Publish
+    needs: [extract-version]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image variables
+        id: vars
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: echo "owner=$(echo "$REPO_OWNER" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.base
+          push: true
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.owner }}/indy-plenum-base:${{ needs.extract-version.outputs.version_tag }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/indy-plenum-base:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.vars.outputs.owner }}/indy-plenum:${{ needs.extract-version.outputs.version_tag }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/indy-plenum:latest
+          build-args: BASE_IMAGE=ghcr.io/${{ steps.vars.outputs.owner }}/indy-plenum-base:${{ needs.extract-version.outputs.version_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    needs: [extract-version, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.extract-version.outputs.version_tag }}
+          name: ${{ needs.extract-version.outputs.version_tag }}
+          generate_release_notes: true
+          prerelease: ${{ needs.extract-version.outputs.is_rc }}
+          body: |
+            ## ${{ needs.extract-version.outputs.version_tag }}
+
+            Docker images:
+            - `ghcr.io/${{ github.repository_owner }}/indy-plenum:${{ needs.extract-version.outputs.version_tag }}`
+            - `ghcr.io/${{ github.repository_owner }}/indy-plenum:latest`
+
+  triggerNodeUpdate:
+    name: Trigger indy-node Update
+    needs: [extract-version, publish]
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'hyperledger' }}
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.BOT_PR_PAT }}
+          repository: hyperledger/indy-node
+          event-type: update-node
+          client-payload: '{"dockerTag": "${{ needs.extract-version.outputs.version_tag }}", "email":"${{ github.event.pusher.email }}", "dockerOwner": "${{ github.repository_owner }}"}'
